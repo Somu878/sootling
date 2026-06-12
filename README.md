@@ -16,14 +16,22 @@ The app is a native SwiftUI menu bar process with an always-on-top transparent `
 
 Sootling does not store prompt or response text. CLI parsers read token usage metadata from local logs. The browser extension estimates token counts inside the page and sends only counts, source/model metadata, and timestamps to the Mac app.
 
+## Requirements
+
+- macOS 14 (Sonoma) or later
+- Swift 5.9+ toolchain (Xcode 15+ or the standalone command-line tools)
+
 ## Run
 
+Clone the repo and run from its root:
+
 ```sh
-cd /Users/somukandula/workspace/sootling
+git clone https://github.com/<your-org>/sootling.git
+cd sootling
 swift run Sootling
 ```
 
-Open the package in Xcode with:
+Or open the package in Xcode and run the `Sootling` scheme:
 
 ```sh
 open Package.swift
@@ -34,7 +42,6 @@ The SwiftPM executable sets `NSApplication` to accessory mode at runtime. The bu
 ## Test
 
 ```sh
-cd /Users/somukandula/workspace/sootling
 swift test
 ```
 
@@ -42,7 +49,7 @@ swift test
 
 1. Run Sootling and open Settings.
 2. Copy the Browser bridge port and secret.
-3. In a Chromium-family browser, load `/Users/somukandula/workspace/sootling/extension` as an unpacked extension.
+3. In a Chromium-family browser, load the `extension/` directory from this repo as an unpacked extension (`chrome://extensions` → enable Developer mode → Load unpacked).
 4. Open the extension options page and paste the port and secret.
 5. Send a message on `chatgpt.com`, `claude.ai`, or `gemini.google.com`.
 
@@ -58,6 +65,49 @@ The pet should react as messages appear. Browser counts are estimates based on v
 - SwiftUI menu bar popover, settings, equivalents, and a floating pet overlay.
 - Optional full-screen smoke: each prompt fogs the display in proportion to its CO₂e and fades over ~5s. Click-through, pauses rendering when clear, toggleable in Settings → Pet.
 - Localhost browser bridge plus Chrome MV3 extension scaffold for ChatGPT, Claude, and Gemini web chats.
+
+## Package a `.app` / DMG
+
+To build a distributable disk image from a release binary:
+
+```sh
+./scripts/build-dmg.sh
+```
+
+This compiles a release build, assembles `Sootling.app`, ad-hoc signs it, and writes `dist/Sootling-<version>.dmg`. The app icon can be regenerated with `swift scripts/make-icon.swift`.
+
+## Contributing
+
+Contributions are welcome — bug fixes, new parsers, and pet personality all help.
+
+### Project layout
+
+- `Sootling/Ingest/` — log watchers and per-tool usage parsers
+- `Sootling/Store/` — SQLite persistence (thread-safe serial queue)
+- `Sootling/Pet/` — Wattson's overlay, animations, and quip vocabulary
+- `Sootling/UI/` — app model, menu bar, settings, and the stats dashboard
+- `extension/` — Chromium MV3 extension for browser chats
+- `website/` — Vite + React marketing site
+- `scripts/` — icon and DMG packaging tooling
+- `Tests/` — XCTest suites
+
+### Workflow
+
+1. Fork and create a feature branch.
+2. Make your change and add or update tests where it makes sense.
+3. Run `swift build` and `swift test` — both must pass.
+4. Open a pull request describing the change and how you verified it.
+
+### Adding a new tool parser
+
+Most "trace another CLI" requests come down to a parser plus a log-source definition:
+
+1. Add a `UsageSource` case in `Sootling/UsageEvent.swift` (and its `displayName`).
+2. Implement a parser in `Sootling/Ingest/UsageParsers.swift`, following an existing one. Pick `.tailJSONL` for append-only logs or `.wholeFileJSON` for files rewritten in place.
+3. Register the log directory and read mode in `Sootling/Ingest/LogDirectoryWatcher.swift`.
+4. Add a fixture-backed test under `Tests/`.
+
+Parsers must read **only** token counts and metadata (model, timestamps, source) — never prompt or response text.
 
 ## Notes
 
