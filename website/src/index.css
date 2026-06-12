@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+/* ---- Hero entrance animations (premium, on load) ---- */
+@keyframes heroReveal {
+  0% { opacity: 0; transform: translateY(28px); filter: blur(12px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes heroFadeUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.hero-anim {
+  opacity: 0;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hero-reveal { animation-name: heroReveal; animation-duration: 1.1s; }
+.hero-fade { animation-name: heroFadeUp; animation-duration: 1s; }
+
+/* ---- Ambient smoke in the smog layer ---- */
+@keyframes smokeDrift {
+  0% { transform: translate(0, 0) scale(1); opacity: 0; }
+  15% { opacity: var(--smoke-peak, 0.5); }
+  85% { opacity: calc(var(--smoke-peak, 0.5) * 0.4); }
+  100% { transform: translate(var(--smoke-dx, 40px), -42vh) scale(1.6); opacity: 0; }
+}
+.smoke-blob {
+  animation: smokeDrift var(--smoke-dur, 16s) linear infinite;
+  animation-delay: var(--smoke-delay, 0s);
+}
+
+/* ---- Wattson ---- */
+@keyframes petBreathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.025); }
+}
+@keyframes petBlink {
+  0%, 95.5%, 100% { transform: scaleY(1); }
+  97.5% { transform: scaleY(0.08); }
+}
+@keyframes puffRise {
+  0% { transform: translate(0, 0) scale(0.5); opacity: 0.55; }
+  100% { transform: translate(14px, -64px) scale(1.5); opacity: 0; }
+}
+@keyframes sparkleRise {
+  0% { transform: translate(0, 0) scale(0.6) rotate(0deg); opacity: 0.95; }
+  100% { transform: translate(-10px, -58px) scale(1.1) rotate(160deg); opacity: 0; }
+}
+@keyframes bubblePop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.6); }
+  12% { opacity: 1; transform: translateY(0) scale(1.06); }
+  18% { transform: scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+}
+.pet-breathe { animation: petBreathe 3.4s ease-in-out infinite; }
+.pet-blink { transform-origin: center; animation: petBlink 4.6s ease-in-out infinite; }
+.puff-rise { animation: puffRise 1.7s ease-out forwards; }
+.sparkle-rise { animation: sparkleRise 1.6s ease-out forwards; }
+.bubble-pop { animation: bubblePop 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* ---- Scroll-clear smog on section edges ---- */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+.float-slow { animation: floatSlow 5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-anim { animation: none; opacity: 1; }
+  .smoke-blob,
+  .pet-breathe,
+  .pet-blink,
+  .puff-rise,
+  .sparkle-rise,
+  .float-slow {
+    animation: none;
+  }
+  .bubble-pop { animation: none; opacity: 1; }
+}

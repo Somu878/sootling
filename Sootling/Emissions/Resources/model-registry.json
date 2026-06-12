@@ -1,0 +1,115 @@
+{
+  "models": [
+    {
+      "id": "gpt-5-codex",
+      "provider": "openai",
+      "aliases": ["gpt-5-codex", "gpt-5", "codex"],
+      "totalParametersB": 1200,
+      "activeParametersBMin": 120,
+      "activeParametersBMax": 360,
+      "pueMin": 1.20,
+      "pueMax": 1.20,
+      "notes": "Conservative frontier-class Codex mapping until public architecture data exists."
+    },
+    {
+      "id": "gpt-4",
+      "provider": "openai",
+      "aliases": ["gpt-4", "gpt-4-0613"],
+      "totalParametersB": 1800,
+      "activeParametersBMin": 176,
+      "activeParametersBMax": 528,
+      "pueMin": 1.20,
+      "pueMax": 1.20,
+      "notes": "EcoLogits-style public estimate for GPT-4 sparse MoE."
+    },
+    {
+      "id": "gpt-4o",
+      "provider": "openai",
+      "aliases": ["gpt-4o", "gpt-4.1", "gpt-4.1-codex"],
+      "totalParametersB": 800,
+      "activeParametersBMin": 70,
+      "activeParametersBMax": 220,
+      "pueMin": 1.20,
+      "pueMax": 1.20,
+      "notes": "Scaled proprietary OpenAI model estimate."
+    },
+    {
+      "id": "gpt-4o-mini",
+      "provider": "openai",
+      "aliases": ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1-nano"],
+      "totalParametersB": 60,
+      "activeParametersBMin": 8,
+      "activeParametersBMax": 25,
+      "pueMin": 1.20,
+      "pueMax": 1.20,
+      "notes": "Small proprietary model estimate."
+    },
+    {
+      "id": "claude-opus",
+      "provider": "anthropic",
+      "aliases": ["claude-3-opus", "claude-opus-4", "claude-opus-5"],
+      "totalParametersB": 2000,
+      "activeParametersBMin": 200,
+      "activeParametersBMax": 600,
+      "pueMin": 1.09,
+      "pueMax": 1.14,
+      "notes": "EcoLogits-style Claude Opus frontier estimate."
+    },
+    {
+      "id": "claude-sonnet",
+      "provider": "anthropic",
+      "aliases": ["claude-3-sonnet", "claude-3-5-sonnet", "claude-3.5-sonnet", "claude-sonnet-4", "claude-sonnet-5", "claude-fable-5"],
+      "totalParametersB": 700,
+      "activeParametersBMin": 70,
+      "activeParametersBMax": 210,
+      "pueMin": 1.09,
+      "pueMax": 1.14,
+      "notes": "Mid/frontier Anthropic estimate used for Claude Code defaults."
+    },
+    {
+      "id": "claude-haiku",
+      "provider": "anthropic",
+      "aliases": ["claude-3-haiku", "claude-3-5-haiku", "claude-haiku"],
+      "totalParametersB": 80,
+      "activeParametersBMin": 10,
+      "activeParametersBMax": 30,
+      "pueMin": 1.09,
+      "pueMax": 1.14,
+      "notes": "Small Anthropic model estimate."
+    },
+    {
+      "id": "gemini-pro",
+      "provider": "google",
+      "aliases": ["gemini-pro", "gemini-1.5-pro", "gemini-2.0-pro", "gemini-2.5-pro"],
+      "totalParametersB": 1000,
+      "activeParametersBMin": 100,
+      "activeParametersBMax": 300,
+      "pueMin": 1.09,
+      "pueMax": 1.09,
+      "notes": "Gemini Pro frontier-class estimate."
+    },
+    {
+      "id": "gemini-flash",
+      "provider": "google",
+      "aliases": ["gemini-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"],
+      "totalParametersB": 120,
+      "activeParametersBMin": 15,
+      "activeParametersBMax": 45,
+      "pueMin": 1.09,
+      "pueMax": 1.09,
+      "notes": "Gemini Flash estimate."
+    }
+  ],
+  "fallback": {
+    "id": "unknown-frontier",
+    "provider": "unknown",
+    "aliases": [],
+    "totalParametersB": 400,
+    "activeParametersBMin": 70,
+    "activeParametersBMax": 220,
+    "pueMin": 1.12,
+    "pueMax": 1.20,
+    "notes": "Conservative fallback for unknown hosted frontier models."
+  }
+}
+

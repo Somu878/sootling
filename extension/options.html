@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Sootling Options</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px;
+        max-width: 560px;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 16px 0 6px;
+      }
+
+      input {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #8885;
+        border-radius: 8px;
+        font: inherit;
+      }
+
+      button {
+        margin-top: 18px;
+        padding: 10px 14px;
+        border: 0;
+        border-radius: 8px;
+        background: #111;
+        color: white;
+        font: inherit;
+        font-weight: 700;
+      }
+
+      p {
+        color: #666;
+        line-height: 1.45;
+      }
+
+      #status {
+        margin-top: 12px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sootling Browser Bridge</h1>
+    <p>
+      Copy the port and secret from Sootling Settings. The extension estimates
+      token counts in the page and sends only counts and metadata to the Mac app.
+    </p>
+
+    <label for="port">Port</label>
+    <input id="port" inputmode="numeric" placeholder="54321">
+
+    <label for="secret">Secret</label>
+    <input id="secret" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+
+    <button id="save">Save</button>
+    <div id="status"></div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
+
