@@ -12,8 +12,6 @@
 	<string>6.0</string>
 	<key>CFBundleIdentifier</key>
 	<string>app.sootling.Sootling</string>
-	<key>CFBundleIconFile</key>
-	<string>AppIcon</string>
 	<key>CFBundleName</key>
 	<string>Sootling</string>
 	<key>CFBundleIconFile</key>
