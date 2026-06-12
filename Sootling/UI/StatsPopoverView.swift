@@ -1,12 +1,23 @@
 import SwiftUI
+import Foundation
 
 public struct StatsPopoverView: View {
     @ObservedObject private var model: SootlingAppModel
+    @State private var selectedDate: Date
     private let compact: Bool
 
     public init(model: SootlingAppModel, compact: Bool = false) {
         self.model = model
         self.compact = compact
+        _selectedDate = State(initialValue: Date())
+    }
+
+    private func stepDate(by days: Int) {
+        let today = Calendar.current.startOfDay(for: Date())
+        guard let newDate = Calendar.current.date(byAdding: .day, value: days, to: selectedDate) else { return }
+        let clamped = min(newDate, today)
+        selectedDate = clamped
+        model.selectedDate = clamped
     }
 
     public var body: some View {
@@ -95,28 +106,80 @@ public struct StatsPopoverView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(heroGradient)
 
-            HStack(alignment: .center, spacing: 14) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("TODAY'S FOOTPRINT")
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Stats for \(formatDate(selectedDate))")
                         .font(.system(size: 9.5, weight: .bold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.75))
                         .kerning(1.1)
-                    Text(formatWeight(model.today.gCO2e))
-                        .font(.system(size: 32, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text("\(formatWeight(model.today.minGCO2e))–\(formatWeight(model.today.maxGCO2e)) range · \(format(model.today.energyWh)) Wh")
-                        .font(.system(size: 10, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.8))
-                    Text("\(model.today.eventCount) prompts · \(model.healthState.mood)")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.95))
-                        .padding(.top, 2)
+                    Spacer()
+                    dateStepper
                 }
-                Spacer()
-                budgetRing
+                HStack(alignment: .center, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(Calendar.current.isDateInToday(selectedDate) ? "TODAY'S FOOTPRINT" : "FOOTPRINT")
+                            .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.75))
+                            .kerning(1.1)
+                        Text(formatWeight(dayImpactGCO2e))
+                            .font(.system(size: 32, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text(formatImpactRange())
+                            .font(.system(size: 10, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.8))
+                        Text("\(dayImpactEventCount) prompts · \(dayImpactMood)")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.95))
+                            .padding(.top, 2)
+                    }
+                    Spacer()
+                    budgetRing
+                }
             }
             .padding(16)
         }
+    }
+
+    private var dateStepper: some View {
+        HStack(spacing: 8) {
+            Button(action: { stepDate(by: -1) }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(.white.opacity(0.15)))
+            }
+            .buttonStyle(.plain)
+            .help("Previous day")
+            Button(action: { stepDate(by: 1) }) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(.white.opacity(0.15)))
+            }
+            .buttonStyle(.plain)
+            .help("Next day")
+        }
+    }
+
+    private var dayImpactGCO2e: Double {
+        model.dayImpact?.gCO2e ?? 0
+    }
+
+    private var dayImpactEventCount: Int {
+        model.dayImpact?.eventCount ?? 0
+    }
+
+    private var dayImpactMood: String {
+        model.dayImpactHealthState.mood
+    }
+
+    private func formatImpactRange() -> String {
+        let min = model.dayImpact?.minGCO2e ?? 0
+        let max = model.dayImpact?.maxGCO2e ?? 0
+        let wh = model.dayImpact?.energyWh ?? 0
+        return "\(formatWeight(min))–\(formatWeight(max)) range · \(format(wh)) Wh"
     }
 
     private var budgetRing: some View {
@@ -124,11 +187,11 @@ public struct StatsPopoverView: View {
             Circle()
                 .stroke(.white.opacity(0.25), lineWidth: 7)
             Circle()
-                .trim(from: 0, to: model.budgetProgress)
+                .trim(from: 0, to: dayBudgetProgress)
                 .stroke(.white, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 0) {
-                Text("\(Int((model.budgetProgress * 100).rounded()))%")
+                Text("\(Int((dayBudgetProgress * 100).rounded()))%")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                 Text("budget")
@@ -139,9 +202,15 @@ public struct StatsPopoverView: View {
         .frame(width: 62, height: 62)
     }
 
+    private var dayBudgetProgress: Double {
+        guard model.settings.dailyBudgetGCO2e > 0 else { return 0 }
+        return min(1, dayImpactGCO2e / model.settings.dailyBudgetGCO2e)
+    }
+
     private var heroGradient: LinearGradient {
+        let state = Calendar.current.isDateInToday(selectedDate) ? model.healthState : model.dayImpactHealthState
         let colors: [Color]
-        switch model.healthState {
+        switch state {
         case .thriving:
             colors = [Color(red: 0.20, green: 0.65, blue: 0.36), Color(red: 0.08, green: 0.42, blue: 0.28)]
         case .content:
@@ -161,14 +230,14 @@ public struct StatsPopoverView: View {
             let peak = max(model.weekly.map(\.gCO2e).max() ?? 1, 1)
             HStack(alignment: .bottom, spacing: 10) {
                 ForEach(model.weekly) { day in
-                    let isToday = Calendar.current.isDateInToday(day.day)
+                    let isSelected = Calendar.current.isDate(day.day, equalTo: selectedDate, toGranularity: .day)
                     VStack(spacing: 4) {
                         Text(day.gCO2e > 0 ? formatWeightShort(day.gCO2e) : " ")
                             .font(.system(size: 8, weight: .medium, design: .rounded))
                             .foregroundStyle(.secondary)
                         Capsule()
                             .fill(
-                                isToday
+                                isSelected
                                     ? AnyShapeStyle(LinearGradient(
                                         colors: [.teal, .green],
                                         startPoint: .top,
@@ -178,8 +247,8 @@ public struct StatsPopoverView: View {
                             )
                             .frame(height: 8 + 50 * (day.gCO2e / peak))
                         Text(weekdayLetter(day.day))
-                            .font(.system(size: 9, weight: isToday ? .bold : .regular, design: .rounded))
-                            .foregroundStyle(isToday ? .primary : .secondary)
+                            .font(.system(size: 9, weight: isSelected ? .bold : .regular, design: .rounded))
+                            .foregroundStyle(isSelected ? .primary : .secondary)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -191,9 +260,9 @@ public struct StatsPopoverView: View {
     // MARK: Equivalents
 
     private var equivalentsCard: some View {
-        card("Today feels like") {
+        card(Calendar.current.isDateInToday(selectedDate) ? "Today feels like" : "\(formatDate(selectedDate)) feels like") {
             let items = Equivalents.describe(
-                gCO2e: model.today.gCO2e,
+                gCO2e: dayImpactGCO2e,
                 gridIntensityGCO2ePerKWh: model.settings.gridIntensityGCO2ePerKWh
             )
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
@@ -298,11 +367,12 @@ public struct StatsPopoverView: View {
     // MARK: Analytics
 
     private var analyticsCard: some View {
-        card("Provider & model analytics") {
+        let analytics = Calendar.current.isDateInToday(selectedDate) ? model.analytics : model.dayAnalytics
+        return card("Provider & model analytics") {
             VStack(alignment: .leading, spacing: 10) {
-                analyticsSection(title: "Providers", rows: model.analytics.providers)
+                analyticsSection(title: "Providers", rows: analytics.providers)
                 Divider()
-                analyticsSection(title: "Models", rows: model.analytics.models)
+                analyticsSection(title: "Models", rows: analytics.models)
             }
         }
     }
@@ -313,7 +383,7 @@ public struct StatsPopoverView: View {
                 .font(.system(size: 10, weight: .bold, design: .rounded))
                 .foregroundStyle(.secondary)
             if rows.isEmpty {
-                Text("No usage yet today.")
+                Text(Calendar.current.isDateInToday(selectedDate) ? "No usage yet today." : "No usage on \(formatDate(selectedDate)).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -358,14 +428,15 @@ public struct StatsPopoverView: View {
     // MARK: Recent prompts
 
     private var recentCard: some View {
-        card("Recent prompts") {
-            if model.recentEvents.isEmpty {
+        let events = Calendar.current.isDateInToday(selectedDate) ? model.recentEvents : model.dayEvents
+        return card("Recent prompts") {
+            if events.isEmpty {
                 Text("No AI usage seen yet — Wattson is watching.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(model.recentEvents.prefix(8).enumerated()), id: \.element.id) { index, event in
+                    ForEach(Array(events.prefix(8).enumerated()), id: \.element.id) { index, event in
                         if index > 0 {
                             Divider()
                         }
@@ -432,6 +503,13 @@ public struct StatsPopoverView: View {
     private func weekdayLetter(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEEE"
+        return formatter.string(from: date)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
         return formatter.string(from: date)
     }
 

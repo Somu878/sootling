@@ -39,6 +39,7 @@ public final class SootlingAppModel: ObservableObject {
     private let engine = EmissionEngine()
     private var database: SootlingDatabase?
     private var watcher: LogDirectoryWatcher?
+    private var openCodeDBWatcher: OpenCodeDBWatcher?
     private var browserBridge: BrowserBridge?
     private var petController: PetPanelController?
     private var smokeController: ScreenSmokeController?
@@ -74,6 +75,38 @@ public final class SootlingAppModel: ObservableObject {
         PetHealthState.fromBudgetProgress(budgetProgress)
     }
 
+    @Published public var selectedDate: Date = Date() {
+        didSet {
+            updateDayImpact(for: selectedDate)
+        }
+    }
+
+    @Published public private(set) var dayImpact: DailyImpact? = nil
+    @Published public private(set) var dayImpactHealthState: PetHealthState = .sooty
+    @Published public private(set) var dayAnalytics: UsageAnalytics = .empty
+    @Published public private(set) var dayEvents: [StoredUsageEvent] = []
+
+    public func updateDayImpact(for date: Date) {
+        Task { @MainActor in
+            guard let database else { return }
+            do {
+                let startOfDay = Calendar.current.startOfDay(for: date)
+                let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                let impact = try database.dailyImpact(since: startOfDay)
+                dayImpact = impact
+                dayAnalytics = try database.analytics(since: startOfDay, limit: 12)
+                dayEvents = try database.recentEvents(limit: 12)
+                    .filter { $0.timestamp >= startOfDay && $0.timestamp < endOfDay }
+                let progress = settings.dailyBudgetGCO2e > 0
+                    ? min(1, impact.gCO2e / settings.dailyBudgetGCO2e)
+                    : 0
+                dayImpactHealthState = PetHealthState.fromBudgetProgress(progress)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
     public var menuBarTitle: String {
         if today.gCO2e < 10 {
             return String(format: "%.1fg", today.gCO2e)
@@ -102,6 +135,14 @@ public final class SootlingAppModel: ObservableObject {
             }
             self.watcher = watcher
             watcher.start()
+
+            let openCodeDB = OpenCodeDBWatcher { [weak self] event in
+                Task { @MainActor in
+                    self?.record(event: event)
+                }
+            }
+            self.openCodeDBWatcher = openCodeDB
+            openCodeDB.start()
 
             let bridge = BrowserBridge(
                 onUsage: { [weak self] event in
@@ -136,10 +177,8 @@ public final class SootlingAppModel: ObservableObject {
     }
 
     public func scanNow() {
-        // Scan happens on the watcher's queue; new events arrive via the onEvent
-        // callback (which refreshes). Refresh now too so totals update even if the
-        // scan finds nothing new.
         watcher?.requestScan()
+        openCodeDBWatcher?.scanOnce()
         refresh()
     }
 

@@ -46,12 +46,6 @@ public struct LogSourceDefinition: Equatable, Sendable {
                 source: .geminiCLI,
                 allowedExtensions: ["json", "jsonl", "log"]
             ),
-            LogSourceDefinition(
-                root: home.appendingPathComponent(".local/share/opencode/storage/message", isDirectory: true),
-                source: .openCode,
-                allowedExtensions: ["json"],
-                readMode: .wholeFileJSON
-            )
         ]
     }
 }
@@ -68,7 +62,6 @@ public final class LogDirectoryWatcher {
     private let claudeParser = ClaudeCodeParser()
     private let codexParser = CodexCLIParser()
     private let geminiParser = GeminiCLIParser()
-    private let openCodeParser = OpenCodeParser()
 
     public init(
         sources: [LogSourceDefinition] = LogSourceDefinition.defaults(),
@@ -264,17 +257,6 @@ public final class LogDirectoryWatcher {
             return
         }
 
-        let data = try Data(contentsOf: url)
-        if let text = String(data: data, encoding: .utf8) {
-            switch source {
-            case .openCode:
-                if let event = openCodeParser.parseFile(text) {
-                    onEvent(event)
-                }
-            default:
-                break
-            }
-        }
         try database.setOffset(fileSize, for: path)
     }
 
