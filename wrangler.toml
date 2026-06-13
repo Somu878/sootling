@@ -1,0 +1,19 @@
+name = "sootling"
+type = "javascript"
+account_id = ""
+workers_dev = true
+
+[env.production]
+name = "sootling"
+
+[build]
+command = "cd website && npm install && npm run build"
+cwd = "."
+watch_paths = ["website/src/**/*.tsx", "website/src/**/*.ts", "website/tailwind.config.js"]
+
+[build.upload]
+format = "service-worker"
+
+[[routes]]
+pattern = "sootling.somuso.fun/*"
+zone_name = "somuso.fun"
